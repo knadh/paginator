@@ -141,11 +141,13 @@ func (s *Set) generateNumbers() {
 	if last > numPages {
 		last = numPages
 	}
-	if s.Page <= half {
-		last = first + s.pg.o.NumPageNums - 1
-	}
-	if s.Page > numPages-half {
-		first = last - s.pg.o.NumPageNums
+	if numPages > s.pg.o.NumPageNums {
+		if last < numPages && s.Page <= half {
+			last = first + s.pg.o.NumPageNums - 1
+		}
+		if s.Page > numPages-half {
+			first = last - s.pg.o.NumPageNums
+		}
 	}
 
 	// If first in the page number series isn't 1, pin it.
