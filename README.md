@@ -32,6 +32,6 @@ paginator provides a simple abstracting for handling pagination requests and off
 ```
 
 ## Example
-Check out the [Alar dictionary glossary](https://alar.ink/glossary/kannada/english) to see paginator in action.
+Check out the [Alar dictionary glossary](https://alar.ink/glossary/kannada/english/%E0%B2%85) to see paginator in action.
 
 Licensed under the MIT license.
