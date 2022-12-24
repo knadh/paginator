@@ -38,6 +38,15 @@ type Opt struct {
 	// PageParam is the name of the query param (in url.Values) from which
 	// NewFromURL() will pick up the current page number.
 	PageParam string
+
+	// If this is set to true, `per_page=all` is allowed and LIMIT is set as 0,
+	// allowing queries to fetch all records in the database (by typically issuing
+	// LIMIT NULL in an SQL query)
+	AllowAll bool
+
+	// Query param value for the `page` query to use in NewFromURL() if AllowAll
+	// is set to true. Default value is `all`.
+	AllowAllParam string
 }
 
 // Paginator represents a Paginator instance.
@@ -73,11 +82,17 @@ func Default() Opt {
 		NumPageNums:    10,
 		PageParam:      "page",
 		PerPageParam:   "per_page",
+		AllowAll:       false,
+		AllowAllParam:  "all",
 	}
 }
 
 // New returns a new Paginator instance.
 func New(o Opt) *Paginator {
+	if o.AllowAllParam == "" {
+		o.AllowAllParam = "all"
+	}
+
 	return &Paginator{
 		o: o,
 	}
@@ -89,12 +104,19 @@ func (p *Paginator) NewFromURL(q url.Values) Set {
 		perPage, _ = strconv.Atoi(q.Get("per_page"))
 		page, _    = strconv.Atoi(q.Get("page"))
 	)
+
+	if q.Get("per_page") == p.o.AllowAllParam {
+		perPage = -1
+	}
+
 	return p.New(page, perPage)
 }
 
 // New returns a page Set.
 func (p *Paginator) New(page, perPage int) Set {
-	if perPage < 1 {
+	if perPage < 0 && p.o.AllowAll {
+		perPage = 0
+	} else if perPage < 1 {
 		perPage = p.o.DefaultPerPage
 	} else if perPage > p.o.MaxPerPage {
 		perPage = p.o.MaxPerPage
