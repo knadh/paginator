@@ -24,6 +24,7 @@ type Opt struct {
 	// MaxPerPage is the number number of items per page. Usually, this has the
 	// the same value as PerPage. In some cases, it may be desirable to have
 	// a small default value but still allow users to request a larger number.
+	// AllowAll is set to true, this does not take effect.
 	MaxPerPage int
 
 	// NumPageNums is the of number of page numbers to generate when
@@ -42,6 +43,8 @@ type Opt struct {
 	// If this is set to true, `per_page=all` is allowed and LIMIT is set as 0,
 	// allowing queries to fetch all records in the database (by typically issuing
 	// LIMIT NULL in an SQL query)
+	// If this is set to true, MaxPerPage limit does not apply and the per_page
+	// batch size can be anything.
 	AllowAll bool
 
 	// Query param value for the `page` query to use in NewFromURL() if AllowAll
@@ -118,7 +121,7 @@ func (p *Paginator) New(page, perPage int) Set {
 		perPage = 0
 	} else if perPage < 1 {
 		perPage = p.o.DefaultPerPage
-	} else if perPage > p.o.MaxPerPage {
+	} else if !p.o.AllowAll && perPage > p.o.MaxPerPage {
 		perPage = p.o.MaxPerPage
 	}
 	if page < 1 {

@@ -66,15 +66,13 @@ func TestPaginator(t *testing.T) {
 	assert.Equal(t, s.Page, 1)
 	assert.Equal(t, s.PerPage, 50)
 
-	// Exceed per page with AlloWall = true
+	// Exceed per page with AllowAll = true
 	opt.AllowAll = true
-	q.Set("page", "1")
-	q.Set("per_page", "500")
-
 	p = New(opt)
 	s = p.NewFromURL(q)
 	assert.Equal(t, s.Page, 1)
-	assert.Equal(t, s.PerPage, 50)
+	// This is now allowed because AllowAll = true;
+	assert.Equal(t, s.PerPage, 500)
 
 	q.Set("per_page", "all")
 	s = p.NewFromURL(q)
