@@ -1,4 +1,4 @@
-module github.com/knadh/paginator
+module github.com/knadh/paginator/v2
 
 go 1.12
 
