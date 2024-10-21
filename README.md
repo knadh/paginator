@@ -27,8 +27,9 @@ paginator provides a simple abstracting for handling pagination requests and off
     // from the database, do:
     p.SetTotal(totalFromDB)
 
-    // Generate HTML page numbers in a template.
-    p.HTML()
+    // Generate HTML page numbers in a template
+    // (and pass optional query params to append to each page URL)
+    p.HTML("", url.Values{})
 ```
 
 ## Example

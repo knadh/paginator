@@ -39,11 +39,13 @@ func TestPaginator(t *testing.T) {
 		{testCase{Page: 10, PerPage: 5, Total: 100}, Set{PerPage: 5, Page: 10, Offset: 45, Limit: 5}},
 		{testCase{Page: 10, PerPage: 10, Total: 100}, Set{PerPage: 10, Page: 10, Offset: 90, Limit: 10}},
 		{testCase{Page: -1, PerPage: 10, Total: 100}, Set{PerPage: 10, Page: 1, Offset: 0, Limit: 10}},
+		{testCase{Page: 100, PerPage: 10, Total: 10}, Set{PerPage: 10, Page: 1, Offset: 0, Limit: 10}},
 	}
 
 	q := url.Values{}
 	for _, c := range cases {
 		s := p.New(c.testCase.Page, c.testCase.PerPage)
+		s.SetTotal(c.testCase.Total)
 		assert.Equal(t, s.Page, c.result.Page)
 		assert.Equal(t, s.PerPage, c.result.PerPage)
 		assert.Equal(t, s.Offset, c.result.Offset)

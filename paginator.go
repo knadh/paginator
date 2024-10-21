@@ -61,10 +61,11 @@ type Paginator struct {
 type Set struct {
 	// These values are json tagged in case they need to be embedded
 	// in a struct that's sent to the outside world.
-	Page       int `json:"page"`
-	PerPage    int `json:"per_page"`
-	TotalPages int `json:"total_pages"`
-	Total      int `json:"total"`
+	Page       int        `json:"page"`
+	PerPage    int        `json:"per_page"`
+	TotalPages int        `json:"total_pages"`
+	Total      int        `json:"total"`
+	Params     url.Values `json:"params"`
 
 	// Computed values for queries.
 	Offset int `json:"-"`
@@ -104,11 +105,11 @@ func New(o Opt) *Paginator {
 // NewFromURL returns a new pagination Set by .
 func (p *Paginator) NewFromURL(q url.Values) Set {
 	var (
-		perPage, _ = strconv.Atoi(q.Get("per_page"))
-		page, _    = strconv.Atoi(q.Get("page"))
+		perPage, _ = strconv.Atoi(q.Get(p.o.PerPageParam))
+		page, _    = strconv.Atoi(q.Get(p.o.PageParam))
 	)
 
-	if q.Get("per_page") == p.o.AllowAllParam {
+	if q.Get(p.o.PerPageParam) == p.o.AllowAllParam {
 		perPage = -1
 	}
 
@@ -144,15 +145,29 @@ func (s *Set) SetTotal(t int) {
 	s.generateNumbers()
 }
 
+// SetParams sets additional query params to be appended to the paginated URLs.
+func (s *Set) SetParams(p url.Values) {
+	s.Params = p
+}
+
 // generateNumbers generates page numbers on a Set and fills the .PageFirst,
 // .Pages[], and .PageLast values.
 func (s *Set) generateNumbers() {
 	if s.Total <= s.PerPage {
+		s.Offset = 0
+		s.Page = 1
 		return
 	}
+
 	numPages := int(math.Ceil(float64(s.Total) / float64(s.PerPage)))
 	s.TotalPages = numPages
 	half := (s.pg.o.NumPageNums / 2)
+
+	if s.Page > numPages {
+		s.Offset = (numPages - 1) * s.PerPage
+
+		s.Page = numPages
+	}
 
 	// First and last page numbers to print, half towards the back
 	// and half towards the front.
@@ -192,11 +207,18 @@ func (s *Set) generateNumbers() {
 	}
 }
 
-// HTML prints pagination as HTML.
-func (s *Set) HTML(uri string) string {
+// HTML prints pagination as HTML. It takes optional query params that
+// are appended to every page URL.
+func (s *Set) HTML(uri string, qp url.Values) string {
+	if qp == nil {
+		qp = url.Values{}
+	}
+
 	var b bytes.Buffer
 	if s.PinFirstPage {
-		b.WriteString(`<a class="pg-page-first" href="` + fmt.Sprintf(uri, 1) + `">`)
+		qp.Set(s.pg.o.PageParam, "1")
+		u := uri + "?" + qp.Encode()
+		b.WriteString(`<a class="pg-page-first" href="` + u + `">`)
 		b.WriteString("1")
 		b.WriteString(`</a> `)
 		b.WriteString(`<span class="pg-page-ellipsis-first">...</span> `)
@@ -206,13 +228,20 @@ func (s *Set) HTML(uri string) string {
 		if s.Page == p {
 			c = " pg-selected"
 		}
-		b.WriteString(`<a class="pg-page` + c + `" href="` + fmt.Sprintf(uri, p) + `">`)
+
+		qp.Set(s.pg.o.PageParam, fmt.Sprintf("%d", p))
+		u := uri + "?" + qp.Encode()
+
+		b.WriteString(`<a class="pg-page` + c + `" href="` + u + `">`)
 		b.WriteString(fmt.Sprintf("%d", p))
 		b.WriteString(`</a> `)
 	}
 	if s.PinLastPage {
+		qp.Set(s.pg.o.PageParam, fmt.Sprintf("%d", s.TotalPages))
+		u := uri + "?" + qp.Encode()
+
 		b.WriteString(`<span class="pg-page-ellipsis-last">...</span> `)
-		b.WriteString(`<a class="pg-page-last" href="` + fmt.Sprintf(uri, s.TotalPages) + `">`)
+		b.WriteString(`<a class="pg-page-last" href="` + u + `">`)
 		b.WriteString(fmt.Sprintf("%d", s.TotalPages))
 		b.WriteString(`</a> `)
 	}
