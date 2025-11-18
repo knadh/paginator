@@ -142,6 +142,7 @@ func (p *Paginator) New(page, perPage int) Set {
 // results. This is necessary to generate page numbers.
 func (s *Set) SetTotal(t int) {
 	s.Total = t
+
 	s.generateNumbers()
 }
 
@@ -153,6 +154,13 @@ func (s *Set) SetParams(p url.Values) {
 // generateNumbers generates page numbers on a Set and fills the .PageFirst,
 // .Pages[], and .PageLast values.
 func (s *Set) generateNumbers() {
+	// When PerPage is 0 (fetch all), there's no pagination.
+	if s.PerPage == 0 {
+		s.TotalPages = 1
+		s.Pages = []int{1}
+		return
+	}
+
 	if s.Total <= s.PerPage {
 		s.Offset = 0
 		s.Page = 1
