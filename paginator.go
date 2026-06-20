@@ -78,17 +78,19 @@ type Set struct {
 	pg           *Paginator
 }
 
+var defOpt = Opt{
+	DefaultPerPage: 10,
+	MaxPerPage:     50,
+	NumPageNums:    10,
+	PageParam:      "page",
+	PerPageParam:   "per_page",
+	AllowAll:       false,
+	AllowAllParam:  "all",
+}
+
 // Default returns a paginator.Opt with default values set.
 func Default() Opt {
-	return Opt{
-		DefaultPerPage: 10,
-		MaxPerPage:     50,
-		NumPageNums:    10,
-		PageParam:      "page",
-		PerPageParam:   "per_page",
-		AllowAll:       false,
-		AllowAllParam:  "all",
-	}
+	return defOpt
 }
 
 // New returns a new Paginator instance.
@@ -127,6 +129,16 @@ func (p *Paginator) New(page, perPage int) Set {
 	}
 	if page < 1 {
 		page = 1
+	}
+
+	if p.o.PageParam == "" {
+		p.o.PageParam = defOpt.PageParam
+	}
+	if p.o.PerPageParam == "" {
+		p.o.PerPageParam = defOpt.PerPageParam
+	}
+	if p.o.AllowAllParam == "" {
+		p.o.AllowAllParam = defOpt.AllowAllParam
 	}
 
 	return Set{
