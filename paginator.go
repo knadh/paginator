@@ -9,11 +9,11 @@
 package paginator
 
 import (
-	"bytes"
 	"fmt"
 	"math"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 // Opt represents paginator options.
@@ -234,36 +234,30 @@ func (s *Set) HTML(uri string, qp url.Values) string {
 		qp = url.Values{}
 	}
 
-	var b bytes.Buffer
+	var b strings.Builder
 	if s.PinFirstPage {
-		qp.Set(s.pg.o.PageParam, "1")
-		u := uri + "?" + qp.Encode()
-		b.WriteString(`<a class="pg-page-first" href="` + u + `">`)
-		b.WriteString("1")
-		b.WriteString(`</a> `)
+		fmt.Fprintf(&b, `<a class="pg-page-first" href="%s">1</a> `, s.pageURL(uri, qp, 1))
 		b.WriteString(`<span class="pg-page-ellipsis-first">...</span> `)
 	}
+
 	for _, p := range s.Pages {
-		c := ""
+		class, attr := "pg-page", ""
 		if s.Page == p {
-			c = " pg-selected"
+			class, attr = "pg-page pg-selected", ` aria-current="page"`
 		}
-
-		qp.Set(s.pg.o.PageParam, fmt.Sprintf("%d", p))
-		u := uri + "?" + qp.Encode()
-
-		b.WriteString(`<a class="pg-page` + c + `" href="` + u + `">`)
-		b.WriteString(fmt.Sprintf("%d", p))
-		b.WriteString(`</a> `)
+		fmt.Fprintf(&b, `<a class="%s"%s href="%s">%d</a> `, class, attr, s.pageURL(uri, qp, p), p)
 	}
+
 	if s.PinLastPage {
-		qp.Set(s.pg.o.PageParam, fmt.Sprintf("%d", s.TotalPages))
-		u := uri + "?" + qp.Encode()
-
 		b.WriteString(`<span class="pg-page-ellipsis-last">...</span> `)
-		b.WriteString(`<a class="pg-page-last" href="` + u + `">`)
-		b.WriteString(fmt.Sprintf("%d", s.TotalPages))
-		b.WriteString(`</a> `)
+		fmt.Fprintf(&b, `<a class="pg-page-last" href="%s">%d</a> `, s.pageURL(uri, qp, s.TotalPages), s.TotalPages)
 	}
+
 	return b.String()
+}
+
+// pageURL appends the page query param and returns the full page URL.
+func (s *Set) pageURL(uri string, qp url.Values, page int) string {
+	qp.Set(s.pg.o.PageParam, strconv.Itoa(page))
+	return uri + "?" + qp.Encode()
 }
